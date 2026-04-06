@@ -116,4 +116,4 @@ python-dotenv
 
 ## Author
 
-Your Name — [Ayush Ratna](#) · [Ayush-delta](#)
+Ayush Ratna — [LinkedIn](https://www.linkedin.com/in/ayush-ratna27/) · [GitHub](https://github.com/Ayush-delta)
