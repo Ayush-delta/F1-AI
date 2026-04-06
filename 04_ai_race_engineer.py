@@ -7,6 +7,9 @@ import joblib
 import os
 from groq import Groq
 from dotenv import load_dotenv
+import fastf1
+import json
+import ast
 
 load_dotenv()
 
@@ -55,22 +58,7 @@ models = load_models()
 
 # Race context for AI 
 def build_race_context():
-    ctx = ["=== 2023 Monaco GP + 2026 Season Data ===\n"]
-    if "results" in data:
-        res = data["results"].copy()
-        res["Position"] = pd.to_numeric(res["Position"], errors="coerce")
-        top10 = res.nsmallest(10, "Position")[["Position","FullName","TeamName","Points"]]
-        ctx.append(f"MONACO 2023 RESULTS:\n{top10.to_string(index=False)}\n")
-    if "laps" in data:
-        laps = data["laps"].copy()
-        laps["LapTimeSec"] = pd.to_timedelta(laps["LapTime"]).dt.total_seconds()
-        clean = laps[laps["LapTimeSec"].between(72, 100)]
-        best = clean.groupby("Driver")["LapTimeSec"].min().sort_values().head(5).reset_index()
-        best.columns = ["Driver","BestLap"]
-        best["BestLap"] = best["BestLap"].round(3)
-        ctx.append(f"FASTEST LAPS:\n{best.to_string(index=False)}\n")
-        pit = laps[laps["PitInTime"].notna()][["Driver","LapNumber","Compound"]]
-        ctx.append(f"PIT STOPS:\n{pit.to_string(index=False)}\n")
+    ctx = ["=== 2026 Season Predictions Data ===\n"]
     if "predictions" in data:
         preds = data["predictions"]
         winners = preds[preds["PredRank"]==1][["Race","Driver","Team","PodiumProb"]].head(5)
@@ -79,17 +67,117 @@ def build_race_context():
 
 RACE_CONTEXT = build_race_context()
 
-SYSTEM_PROMPT = f"""You are an expert F1 race engineer with deep knowledge of Formula 1 
-strategy, tyre management, and race tactics. You have data from Monaco 2023 and 
-predictions for the full 2026 season. Be concise, data-driven and use F1 terminology.
+fastf1.Cache.enable_cache("data/raw/fastf1_cache")
 
+def get_race_results(year: int, circuit: str) -> str:
+    try:
+        session = fastf1.get_session(year, circuit, 'R')
+        session.load(telemetry=False, weather=False, messages=False)
+        res = session.results
+        if res.empty: return f"No results found for {year} {circuit}."
+        res["Position"] = pd.to_numeric(res["Position"], errors="coerce")
+        top10 = res.nsmallest(10, "Position")[["Position","FullName","TeamName","Points"]]
+        return f"Race Results ({year} {circuit}):\n" + top10.to_string(index=False)
+    except Exception as e:
+        return f"Error fetching results: {e}"
+
+def get_race_weather(year: int, circuit: str) -> str:
+    try:
+        session = fastf1.get_session(year, circuit, 'R')
+        session.load(telemetry=False, weather=True, messages=False)
+        weather = session.weather_data
+        if weather.empty: return f"No weather data found for {year} {circuit}."
+        avg_air = weather['AirTemp'].mean()
+        avg_track = weather['TrackTemp'].mean()
+        rain = "Yes" if weather['Rainfall'].any() else "No"
+        return f"Weather Summary ({year} {circuit}):\nAverage Air Temp: {avg_air:.1f}C\nAverage Track Temp: {avg_track:.1f}C\nRainfall: {rain}"
+    except Exception as e:
+        return f"Error fetching weather: {e}"
+
+def get_fastest_laps(year: int, circuit: str) -> str:
+    try:
+        session = fastf1.get_session(year, circuit, 'R')
+        session.load(telemetry=False, weather=False, messages=False)
+        laps = session.laps
+        if laps.empty: return f"No lap data found for {year} {circuit}."
+        laps["LapTimeSec"] = pd.to_timedelta(laps["LapTime"]).dt.total_seconds()
+        clean = laps[laps["LapTimeSec"] > 0]
+        best = clean.groupby("Driver")["LapTimeSec"].min().sort_values().head(5).reset_index()
+        best.columns = ["Driver","BestLap_Seconds"]
+        best["BestLap_Seconds"] = best["BestLap_Seconds"].round(3)
+        return f"Fastest Laps Top 5 ({year} {circuit}):\n" + best.to_string(index=False)
+    except Exception as e:
+        return f"Error fetching laps: {e}"
+
+AVAILABLE_TOOLS = {
+    "get_race_results": get_race_results,
+    "get_race_weather": get_race_weather,
+    "get_fastest_laps": get_fastest_laps,
+}
+
+TOOLS_SCHEMA = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_race_results",
+            "description": "Get the top 10 finishers for a specific Formula 1 race.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year": {"type": "integer", "description": "The year of the race (e.g. 2023)"},
+                    "circuit": {"type": "string", "description": "The name of the circuit or grand prix (e.g. 'Monza', 'Monaco')"}
+                },
+                "required": ["year", "circuit"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_race_weather",
+            "description": "Get the weather summary (air temp, track temp, rainfall) for a specific Formula 1 race.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year": {"type": "integer", "description": "The year of the race"},
+                    "circuit": {"type": "string", "description": "The name of the circuit or grand prix"}
+                },
+                "required": ["year", "circuit"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_fastest_laps",
+            "description": "Get the top 5 fastest lap times for a specific Formula 1 race.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "year": {"type": "integer", "description": "The year of the race"},
+                    "circuit": {"type": "string", "description": "The name of the circuit or grand prix"}
+                },
+                "required": ["year", "circuit"]
+            }
+        }
+    }
+]
+
+SYSTEM_PROMPT = f"""You are an expert F1 race engineer with deep knowledge of Formula 1 
+strategy, tyre management, and race tactics. You have access to tools that can fetch live
+historical data from the FastF1 database for races between 2020 and 2026.
+
+Check if the user is asking about an historical race or 2026 predictions.
+If they ask about an established historical race, ALWAYS use your tools (`get_race_results`, `get_race_weather`, `get_fastest_laps`) to fetch the exact data before answering.
+If a tool returns "No data found" or an error, politely inform the user.
+
+You also have static predictions for the 2026 season:
 {RACE_CONTEXT}
 
 Guidelines:
-- Reference specific numbers from the data
-- For strategy questions explain trade-offs
-- Use terms like: undercut, overcut, stint, VSC, DRS, tyre window
-- For 2026 predictions, reference the model outputs
+- If a user asks about a past or recently completed race, CALL YOUR TOOLS to verify the data.
+- Do not hallucinate race results.
+- Be concise, data-driven and use F1 terminology.
 """
 
 def get_ai_response(user_message, chat_history):
@@ -102,13 +190,50 @@ def get_ai_response(user_message, chat_history):
                 "role": "assistant" if msg["role"] == "assistant" else "user",
                 "content": msg["content"]
             })
+            
         response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            tools=TOOLS_SCHEMA,
+            tool_choice="auto",
+            max_tokens=1024,
+        )
+        
+        response_message = response.choices[0].message
+        
+        if not response_message.tool_calls:
+            return response_message.content
+            
+        messages.append(response_message)
+        
+        for tool_call in response_message.tool_calls:
+            function_name = tool_call.function.name
+            function_to_call = AVAILABLE_TOOLS[function_name]
+            function_args = json.loads(tool_call.function.arguments)
+            
+            with st.spinner(f"Fetching {function_name} for {function_args.get('year')}..."):
+                function_response = function_to_call(
+                    year=function_args.get("year"),
+                    circuit=function_args.get("circuit")
+                )
+                
+            messages.append({
+                "tool_call_id": tool_call.id,
+                "role": "tool",
+                "name": function_name,
+                "content": str(function_response),
+            })
+            
+        second_response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
             max_tokens=1024,
         )
-        return response.choices[0].message.content
+        return second_response.choices[0].message.content
+        
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return f"Engineer offline: {str(e)}"
 
 # Header 
