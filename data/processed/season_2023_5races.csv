@@ -1,0 +1,101 @@
+FullName,TeamName,Position,Points,Race
+Max Verstappen,Red Bull Racing,1.0,25.0,Bahrain
+Sergio Perez,Red Bull Racing,2.0,18.0,Bahrain
+Fernando Alonso,Aston Martin,3.0,15.0,Bahrain
+Carlos Sainz,Ferrari,4.0,12.0,Bahrain
+Lewis Hamilton,Mercedes,5.0,10.0,Bahrain
+Lance Stroll,Aston Martin,6.0,8.0,Bahrain
+George Russell,Mercedes,7.0,6.0,Bahrain
+Valtteri Bottas,Alfa Romeo,8.0,4.0,Bahrain
+Pierre Gasly,Alpine,9.0,2.0,Bahrain
+Alexander Albon,Williams,10.0,1.0,Bahrain
+Yuki Tsunoda,AlphaTauri,11.0,0.0,Bahrain
+Logan Sargeant,Williams,12.0,0.0,Bahrain
+Kevin Magnussen,Haas F1 Team,13.0,0.0,Bahrain
+Nyck De Vries,AlphaTauri,14.0,0.0,Bahrain
+Nico Hulkenberg,Haas F1 Team,15.0,0.0,Bahrain
+Guanyu Zhou,Alfa Romeo,16.0,0.0,Bahrain
+Lando Norris,McLaren,17.0,0.0,Bahrain
+Esteban Ocon,Alpine,18.0,0.0,Bahrain
+Charles Leclerc,Ferrari,19.0,0.0,Bahrain
+Oscar Piastri,McLaren,20.0,0.0,Bahrain
+Max Verstappen,Red Bull Racing,1.0,25.0,Monaco
+Fernando Alonso,Aston Martin,2.0,18.0,Monaco
+Esteban Ocon,Alpine,3.0,15.0,Monaco
+Lewis Hamilton,Mercedes,4.0,13.0,Monaco
+George Russell,Mercedes,5.0,10.0,Monaco
+Charles Leclerc,Ferrari,6.0,8.0,Monaco
+Pierre Gasly,Alpine,7.0,6.0,Monaco
+Carlos Sainz,Ferrari,8.0,4.0,Monaco
+Lando Norris,McLaren,9.0,2.0,Monaco
+Oscar Piastri,McLaren,10.0,1.0,Monaco
+Valtteri Bottas,Alfa Romeo,11.0,0.0,Monaco
+Nyck De Vries,AlphaTauri,12.0,0.0,Monaco
+Guanyu Zhou,Alfa Romeo,13.0,0.0,Monaco
+Alexander Albon,Williams,14.0,0.0,Monaco
+Yuki Tsunoda,AlphaTauri,15.0,0.0,Monaco
+Sergio Perez,Red Bull Racing,16.0,0.0,Monaco
+Nico Hulkenberg,Haas F1 Team,17.0,0.0,Monaco
+Logan Sargeant,Williams,18.0,0.0,Monaco
+Kevin Magnussen,Haas F1 Team,19.0,0.0,Monaco
+Lance Stroll,Aston Martin,20.0,0.0,Monaco
+Max Verstappen,Red Bull Racing,1.0,26.0,Silverstone
+Lando Norris,McLaren,2.0,18.0,Silverstone
+Lewis Hamilton,Mercedes,3.0,15.0,Silverstone
+Oscar Piastri,McLaren,4.0,12.0,Silverstone
+George Russell,Mercedes,5.0,10.0,Silverstone
+Sergio Perez,Red Bull Racing,6.0,8.0,Silverstone
+Fernando Alonso,Aston Martin,7.0,6.0,Silverstone
+Alexander Albon,Williams,8.0,4.0,Silverstone
+Charles Leclerc,Ferrari,9.0,2.0,Silverstone
+Carlos Sainz,Ferrari,10.0,1.0,Silverstone
+Logan Sargeant,Williams,11.0,0.0,Silverstone
+Valtteri Bottas,Alfa Romeo,12.0,0.0,Silverstone
+Nico Hulkenberg,Haas F1 Team,13.0,0.0,Silverstone
+Lance Stroll,Aston Martin,14.0,0.0,Silverstone
+Guanyu Zhou,Alfa Romeo,15.0,0.0,Silverstone
+Yuki Tsunoda,AlphaTauri,16.0,0.0,Silverstone
+Nyck De Vries,AlphaTauri,17.0,0.0,Silverstone
+Pierre Gasly,Alpine,18.0,0.0,Silverstone
+Kevin Magnussen,Haas F1 Team,19.0,0.0,Silverstone
+Esteban Ocon,Alpine,20.0,0.0,Silverstone
+Max Verstappen,Red Bull Racing,1.0,25.0,Monza
+Sergio Perez,Red Bull Racing,2.0,18.0,Monza
+Carlos Sainz,Ferrari,3.0,15.0,Monza
+Charles Leclerc,Ferrari,4.0,12.0,Monza
+George Russell,Mercedes,5.0,10.0,Monza
+Lewis Hamilton,Mercedes,6.0,8.0,Monza
+Alexander Albon,Williams,7.0,6.0,Monza
+Lando Norris,McLaren,8.0,4.0,Monza
+Fernando Alonso,Aston Martin,9.0,2.0,Monza
+Valtteri Bottas,Alfa Romeo,10.0,1.0,Monza
+Liam Lawson,AlphaTauri,11.0,0.0,Monza
+Oscar Piastri,McLaren,12.0,0.0,Monza
+Logan Sargeant,Williams,13.0,0.0,Monza
+Guanyu Zhou,Alfa Romeo,14.0,0.0,Monza
+Pierre Gasly,Alpine,15.0,0.0,Monza
+Lance Stroll,Aston Martin,16.0,0.0,Monza
+Nico Hulkenberg,Haas F1 Team,17.0,0.0,Monza
+Kevin Magnussen,Haas F1 Team,18.0,0.0,Monza
+Esteban Ocon,Alpine,19.0,0.0,Monza
+Yuki Tsunoda,AlphaTauri,20.0,0.0,Monza
+Max Verstappen,Red Bull Racing,1.0,26.0,Abu Dhabi
+Charles Leclerc,Ferrari,2.0,18.0,Abu Dhabi
+George Russell,Mercedes,3.0,15.0,Abu Dhabi
+Sergio Perez,Red Bull Racing,4.0,12.0,Abu Dhabi
+Lando Norris,McLaren,5.0,10.0,Abu Dhabi
+Oscar Piastri,McLaren,6.0,8.0,Abu Dhabi
+Fernando Alonso,Aston Martin,7.0,6.0,Abu Dhabi
+Yuki Tsunoda,AlphaTauri,8.0,4.0,Abu Dhabi
+Lewis Hamilton,Mercedes,9.0,2.0,Abu Dhabi
+Lance Stroll,Aston Martin,10.0,1.0,Abu Dhabi
+Daniel Ricciardo,AlphaTauri,11.0,0.0,Abu Dhabi
+Esteban Ocon,Alpine,12.0,0.0,Abu Dhabi
+Pierre Gasly,Alpine,13.0,0.0,Abu Dhabi
+Alexander Albon,Williams,14.0,0.0,Abu Dhabi
+Nico Hulkenberg,Haas F1 Team,15.0,0.0,Abu Dhabi
+Logan Sargeant,Williams,16.0,0.0,Abu Dhabi
+Guanyu Zhou,Alfa Romeo,17.0,0.0,Abu Dhabi
+Carlos Sainz,Ferrari,18.0,0.0,Abu Dhabi
+Valtteri Bottas,Alfa Romeo,19.0,0.0,Abu Dhabi
+Kevin Magnussen,Haas F1 Team,20.0,0.0,Abu Dhabi

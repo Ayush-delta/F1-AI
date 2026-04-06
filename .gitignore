@@ -1,0 +1,22 @@
+# Virtual Environments
+venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# F1 Telemetry Caches (Very Heavy)
+data/raw/fastf1_cache/
+
+# MLflow Tracking
+mlruns/
+mlflow.db
+
+# Large Visualizations (Heavy base64 plot outputs)
+data/processed/*.html
+
+# Note: We are keeping the CSVs and PKL models in Git so that 
+# the Streamlit app can be successfully launched upon cloning.
