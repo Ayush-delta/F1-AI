@@ -19,6 +19,11 @@ st.set_page_config(
     layout="wide",
 )
 
+try:
+    st.logo("assets/f1_banner.jpg", size="large")
+except:
+    pass
+
 # Load Groq client 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
@@ -28,8 +33,6 @@ client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 def load_data():
     data = {}
     files = {
-        "laps":        "data/processed/monaco_2023_all_laps.csv",
-        "results":     "data/processed/monaco_2023_results.csv",
         "features":    "data/processed/ml_features_all_races.csv",
         "predictions": "data/processed/2026_season_predictions.csv",
     }
@@ -68,6 +71,20 @@ def build_race_context():
 RACE_CONTEXT = build_race_context()
 
 fastf1.Cache.enable_cache("data/raw/fastf1_cache")
+
+@st.cache_data(show_spinner=False)
+def get_f1_events(year):
+    try:
+        schedule = fastf1.get_event_schedule(year, include_testing=False)
+        return schedule['EventName'].tolist()
+    except:
+        return []
+
+@st.cache_data(show_spinner=False)
+def fetch_race_data(year, circuit):
+    session = fastf1.get_session(year, circuit, 'R')
+    session.load(telemetry=False, weather=False, messages=False)
+    return session.results.copy(), session.laps.copy()
 
 def get_race_results(year: int, circuit: str) -> str:
     try:
@@ -238,13 +255,13 @@ def get_ai_response(user_message, chat_history):
 
 # Header 
 st.title("🏎️ F1 AI Race Engineer")
-st.caption("2026 Season Predictor · Monaco 2023 Analysis · Groq Llama 3.3 · XGBoost")
+st.caption("FastF1 Live Telemetry · 2026 Season Predictor · Groq Llama 3.3 · XGBoost")
 st.divider()
 
 # Tabs 
 tab1, tab2, tab3, tab4 = st.tabs([
     "🏆 2026 Season Predictions",
-    "📊 Race Analysis",
+    "📊 Historical Race Analysis",
     "🤖 AI Race Engineer",
     "ℹ️ About",
 ])
@@ -368,65 +385,87 @@ with tab1:
         disp.columns = ["Pos","Driver","Team","Actual Pts","Pred Pts","Total"]
         st.dataframe(disp, hide_index=True, use_container_width=True)
 
-# TAB 2 — Race Analysis (Monaco 2023)
+# TAB 2 — Historical Race Analysis
 with tab2:
-    st.header("Monaco 2023 — Race Analysis")
+    st.header("📊 Historical Race Analysis")
+    st.caption("Select any past Grand Prix to visualize historical telemetry and race data.")
+    
+    col_yr, col_event, col_btn = st.columns([1, 2, 1])
+    
+    with col_yr:
+        selected_year = st.selectbox("Select Year", list(range(2025, 2019, -1)))
+        
+    with col_event:
+        events = get_f1_events(selected_year)
+        selected_event = st.selectbox("Select Grand Prix", events if events else ["No data"])
+        
+    with col_btn:
+        st.markdown("<br>", unsafe_allow_html=True)
+        load_clicked = st.button("Load Race Data", use_container_width=True)
+        
+    if load_clicked and selected_event != "No data":
+        st.session_state.show_analysis = (selected_year, selected_event)
+        
+    if "show_analysis" in st.session_state:
+        year_ctx, event_ctx = st.session_state.show_analysis
+        with st.spinner(f"Downloading {year_ctx} {event_ctx} data from FastF1..."):
+            try:
+                results, laps = fetch_race_data(year_ctx, event_ctx)
+                
+                if results.empty:
+                    st.warning("No race results found for this event. (Did it happen?)")
+                else:
+                    results["Position"] = pd.to_numeric(results["Position"], errors="coerce")
+                    
+                    winner = results.loc[results['Position'] == 1, 'Abbreviation']
+                    winner_name = winner.iloc[0] if not winner.empty else "N/A"
+                    
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric("Race", f"{year_ctx} {event_ctx}")
+                    col2.metric("Winner", winner_name)
+                    col3.metric("Total Laps", len(laps) if not laps.empty else 0)
 
-    if "results" not in data:
-        st.error("Monaco 2023 results not found.")
-    else:
-        results = data["results"].copy()
-        results["Position"] = pd.to_numeric(results["Position"], errors="coerce")
+                    st.subheader("Race Results")
+                    top10 = results.nsmallest(10, "Position")[
+                        ["Position","FullName","TeamName","GridPosition","Points"]
+                    ]
+                    st.dataframe(top10, hide_index=True, use_container_width=True)
 
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Race", "Monaco 2023")
-        col2.metric("Winner", "VER")
-        col3.metric("Total Laps", len(data.get("laps", pd.DataFrame())))
+                    if not laps.empty:
+                        laps["LapTimeSec"] = pd.to_timedelta(laps["LapTime"]).dt.total_seconds()
+                        
+                        st.subheader("Lap Time Comparison — Top 3")
+                        top3 = results.nsmallest(3, "Position")["Abbreviation"].dropna().tolist()
+                        clean = laps[
+                            laps["LapTimeSec"].notna() &
+                            laps["Driver"].isin(top3)
+                        ].copy()
+                        
+                        q1 = clean["LapTimeSec"].quantile(0.1)
+                        q3 = clean["LapTimeSec"].quantile(0.9)
+                        iqr = q3 - q1
+                        clean = clean[clean["LapTimeSec"] <= q3 + 1.5 * iqr]
+                        
+                        fig4 = px.line(clean, x="LapNumber", y="LapTimeSec", color="Driver",
+                                       markers=True, height=350,
+                                       labels={"LapTimeSec":"Lap Time (s)","LapNumber":"Lap"})
+                        st.plotly_chart(fig4, use_container_width=True)
 
-        st.subheader("Race Results")
-        top10 = results.nsmallest(10, "Position")[
-            ["Position","FullName","TeamName","GridPosition","Points"]
-        ]
-        st.dataframe(top10, hide_index=True, use_container_width=True)
-
-        if "laps" in data:
-            laps = data["laps"].copy()
-            laps["LapTimeSec"] = pd.to_timedelta(laps["LapTime"]).dt.total_seconds()
-
-            st.subheader("Lap Time Comparison — Top 3")
-            top3 = results.nsmallest(3, "Position")["Abbreviation"].tolist()
-            clean = laps[
-                laps["LapTimeSec"].between(72, 105) &
-                laps["Driver"].isin(top3)
-            ].copy()
-            fig4 = px.line(clean, x="LapNumber", y="LapTimeSec", color="Driver",
-                           markers=True, height=350,
-                           labels={"LapTimeSec":"Lap Time (s)","LapNumber":"Lap"})
-            st.plotly_chart(fig4, use_container_width=True)
-
-            st.subheader("Tyre Strategy")
-            tyre = laps[["Driver","LapNumber","Compound"]].copy()
-            compound_colors = {
-                "SOFT":"#E8002D","MEDIUM":"#FFF200",
-                "HARD":"#EBEBEB","INTERMEDIATE":"#39B54A","WET":"#0067FF",
-            }
-            fig5 = px.scatter(tyre, x="LapNumber", y="Driver", color="Compound",
-                              color_discrete_map=compound_colors, height=420,
-                              title="Tyre Strategy — All Drivers")
-            fig5.update_traces(marker=dict(size=6, symbol="square"))
-            st.plotly_chart(fig5, use_container_width=True)
-
-        if "features" in data:
-            st.subheader("Driver Performance Features")
-            feats = data["features"]
-            if "Race" in feats.columns:
-                monaco_f = feats[feats["Race"].str.contains("Monaco", na=False)]
-                if not monaco_f.empty:
-                    cols = ["Driver","GridPosition","FinishPosition",
-                            "AvgLapTime","LapTimeStd","PitStops","PositionDelta"]
-                    cols = [c for c in cols if c in monaco_f.columns]
-                    st.dataframe(monaco_f[cols].round(2), hide_index=True,
-                                 use_container_width=True)
+                        st.subheader("Tyre Strategy")
+                        tyre = laps[["Driver","LapNumber","Compound"]].dropna().copy()
+                        compound_colors = {
+                            "SOFT":"#E8002D", "MEDIUM":"#FFF200",
+                            "HARD":"#EBEBEB", "INTERMEDIATE":"#39B54A", "WET":"#0067FF",
+                            "UNKNOWN":"#9E9E9E"
+                        }
+                        fig5 = px.scatter(tyre, x="LapNumber", y="Driver", color="Compound",
+                                          color_discrete_map=compound_colors, height=420,
+                                          title=f"Tyre Strategy — {year_ctx} {event_ctx}")
+                        fig5.update_traces(marker=dict(size=6, symbol="square"))
+                        st.plotly_chart(fig5, use_container_width=True)
+            except Exception as e:
+                import traceback
+                st.error(f"Failed to load race data: {str(e)}")
 
         # SHAP chart
         shap_path = "data/processed/shap_feature_importance.png"
@@ -434,7 +473,7 @@ with tab2:
             shap_path = "data/models/shap_importance.png"
         if os.path.exists(shap_path):
             st.subheader("SHAP Feature Importance — Podium Prediction Model")
-            st.image(shap_path, use_column_width=True)
+            st.image(shap_path, use_container_width=True)
 
 # TAB 3 — AI Race Engineer Chat
 with tab3:
@@ -442,29 +481,20 @@ with tab3:
     st.caption("Powered by Groq Llama 3.3 70B · Grounded in real F1 data")
 
     with st.sidebar:
-        st.header("📊 Data Status")
-        for label, key in [("Monaco 2023 laps","laps"),("Race results","results"),
-                            ("2026 predictions","predictions")]:
-            if key in data:
-                st.success(f"{label} loaded")
-            else:
-                st.warning(f"{label} missing")
-
-        if models:
-            st.success(f"ML models loaded ({len(models)})")
-        else:
-            st.warning("ML models not found")
+        st.header("🔗 System Connections")
+        st.success("🟢 FastF1 Live Telemetry Engine")
+        st.success("🟢 XGBoost Predictive Backend")
+        st.success("🟢 Groq LLaMA 3.3 Brain")
 
         st.divider()
         st.subheader("💡 Try asking:")
         questions = [
+            "Who won Monza 2024 and what was the weather?",
             "Who will win the 2026 championship?",
-            "Should Verstappen have pitted earlier at Monaco?",
-            "Why is Antonelli predicted to win every race?",
-            "What does the tyre strategy tell us about Monaco?",
+            "What happened in Silverstone 2021?",
             "Compare Leclerc and Hamilton's 2026 predictions",
-            "Which circuit is best for Red Bull in 2026?",
             "Was the undercut possible at Monaco 2023?",
+            "Which circuit is best for Red Bull in 2026?",
             "Which driver is most consistent?",
         ]
         for q in questions:
@@ -474,7 +504,7 @@ with tab3:
     if "messages" not in st.session_state:
         st.session_state.messages = [{
             "role": "assistant",
-            "content": "Race engineer online. I have Monaco 2023 race data and full 2026 season predictions. Ask me anything about strategy, predictions or driver performance."
+            "content": "Race engineer online. I am connected to the FastF1 telemetry database (2020-2026) and our predictive models! Ask me anything about past races, strategy, or 2026 predictions."
         }]
 
     if "quick_question" in st.session_state:

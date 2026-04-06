@@ -15,13 +15,19 @@
   _Covers data engineering, machine learning, and an AI race engineer agent._
 </div>
 
----
+Features an end-to-end Machine Learning ecosystem with three core modules:
 
-Features a full **2026 Season Predictor** trained on FastF1 historical data using a 3-model XGBoost pipeline!
+1. **2026 Season Predictor**: Heatmaps and predictions trained on FastF1 data using a 3-model XGBoost pipeline!
+2. **Historical Race Analysis**: A dynamic visualization hub to extract and plot live lap-time telemetry and tyre strategies for any grand prix between 2020 - 2025.
+3. **Agentic AI Race Engineer**: A locally hosted LLM agent connected to Groq that leverages Python tools to dynamically retrieve fastf1 data to answer your F1 questions!
 
 ![2026 Predictions UI](assets/ui_predictions.png)
 
 ![AI Race Engineer UI](assets/ui_chat.png)
+
+---
+
+For instructions on how to set up the environment and run this application yourself, please see the [CONTRIBUTOR.md](CONTRIBUTOR.md) guide.
 
 ---
 
