@@ -58,7 +58,7 @@ f1_project/
 | 1 | Data pull & exploration | FastF1, pandas, Plotly |
 | 2 | EDA & visual storytelling | Plotly, Seaborn |
 | 3 | GP winner & Podium Prediction Model | XGBoost, Time-Series CV, MLflow, SHAP |
-| 4 | AI race engineer chatbot & UI | Groq (Llama 3.3 70B), Streamlit |
+| 4 | Agentic AI Race Engineer (Tool Calling) | Groq, Llama 3.3 70B, Streamlit, FastF1 |
 
 ---
 
@@ -89,6 +89,9 @@ Models are trained utilizing ONLY data available **before** the race begins (Gri
 
 **Cross-Validation Strategy**
 Uses Chronological `TimeSeriesSplit` to strictly prevent looking into the future of sports events during model evaluation.
+
+**Dynamic Agentic Function Calling**
+The AI Race Engineer is not limited to static context windows. It actively utilizes Groq's Tool/Function calling capabilities to dynamically fetch and query real telemetry data from `fastf1` (weather, race results, lap times) whenever you ask about a grand prix between 2020 and 2026. This transforms the bot from a passive text-generator into an active data-fetching agent.
 
 **Data sources**
 - [FastF1](https://docs.fastf1.dev/) — lap telemetry, tyre data, weather (2018–present)
