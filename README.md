@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/python/python.png" height="150" alt="Python Logo">
+  <img src="https://in.pinterest.com/pin/122441683615016837/" height="150" alt="Python Logo">
   
   <h1>F1 AI/ML Project</h1>
   
